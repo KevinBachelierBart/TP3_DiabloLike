@@ -6,17 +6,22 @@ public class Player_Behavior : MonoBehaviour
 {
     [SerializeField] private InputActionAsset m_inputAction;
     private InputAction m_aim;
-    private InputAction m_move;
+    private InputAction m_leftClick;
+
+    [Header("DESIGN")]
+    bool m_isAiming = false;
+    bool m_isShooting = false;
 
     [Header("ANIMATION & VISUAL")]
     private Animator m_animator;
     [SerializeField] private ParticleSystem m_clickEffect;
 
-
+    [Header("SOUNDS")]
+    [SerializeField] private AudioSource m_sound1911;
     void Start()
     {
         m_aim = m_inputAction.FindAction("Aim");
-        m_move= m_inputAction.FindAction("Move");
+        m_leftClick= m_inputAction.FindAction("Move");
 
         m_animator = GetComponent<Animator>();
     }
@@ -27,13 +32,33 @@ public class Player_Behavior : MonoBehaviour
         {
             m_animator.SetBool("isAiming", true);
             LookAtCursor();
+            m_isAiming = true;
+
+            
         }
         else
         {
             m_animator.SetBool("isAiming", false);
-        }
+            m_isAiming = false;
 
-        if (m_move.WasPressedThisFrame())
+        }
+        if (m_isAiming)
+        {
+            if (m_leftClick.WasPressedThisFrame())
+            {
+                m_isAiming = false;
+                m_isShooting = true;
+
+                m_sound1911.Play();
+
+                m_animator.SetBool("isShooting", true);
+                Debug.Log("Yeah");
+                //m_animator.Play("isShooting", 0, 0f);
+            }
+        }
+        
+
+        if (m_leftClick.WasPressedThisFrame())
         {
             ClickToMove();
         }
@@ -65,7 +90,6 @@ public class Player_Behavior : MonoBehaviour
         transform.LookAt(target);
     }
 
-
     private Vector3 GetWorldMousePosition()//LLM
     {
         Ray ray = Camera.main.ScreenPointToRay(
@@ -83,5 +107,13 @@ public class Player_Behavior : MonoBehaviour
         }
 
         return transform.position;
+    }
+
+    public void EndAnimationShooting()
+    {
+        m_isShooting = false;
+        m_animator.SetBool("isShooting", false);
+        Debug.Log("Go");
+
     }
 }
