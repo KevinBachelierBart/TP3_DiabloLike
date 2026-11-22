@@ -1,5 +1,7 @@
 using Unity.VisualScripting;
+using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
 public class Player_Behavior : MonoBehaviour
@@ -8,10 +10,24 @@ public class Player_Behavior : MonoBehaviour
     private InputAction m_aim;
     private InputAction m_leftClick;
 
-    [Header("DESIGN")]
-    bool m_isAiming = false;
-    bool m_isShooting = false;
+    [Header("NAVMESH")]
+    private NavMeshAgent m_agent;
 
+    [Header("DESIGN")]
+    [SerializeField] private m_enumStateMachine m_stateMachine;
+    public enum m_enumStateMachine 
+    
+    {
+        Idle,
+        Walking,
+        Aiming,
+        Shooting
+    };
+
+    private bool m_isMoving = false;
+    public Vector3 velocit;
+    public float distanceToHit;
+    [Space(10)]
     [Header("ANIMATION & VISUAL")]
     private Animator m_animator;
     [SerializeField] private ParticleSystem m_clickEffect;
@@ -24,6 +40,12 @@ public class Player_Behavior : MonoBehaviour
         m_leftClick= m_inputAction.FindAction("Move");
 
         m_animator = GetComponent<Animator>();
+
+        m_agent = GetComponent<NavMeshAgent>();
+
+        SwitchEnumTo(m_enumStateMachine.Idle);
+
+        m_isMoving = false;
     }
 
     void Update()
@@ -32,37 +54,50 @@ public class Player_Behavior : MonoBehaviour
         {
             m_animator.SetBool("isAiming", true);
             LookAtCursor();
-            m_isAiming = true;
 
-            
+            SwitchEnumTo(m_enumStateMachine.Aiming);
+
         }
         else
         {
             m_animator.SetBool("isAiming", false);
-            m_isAiming = false;
-
-        }
-        if (m_isAiming)
-        {
-            if (m_leftClick.WasPressedThisFrame())
-            {
-                m_isAiming = false;
-                m_isShooting = true;
-
-                m_sound1911.Play();
-
-                m_animator.SetBool("isShooting", true);
-                Debug.Log("Yeah");
-                //m_animator.Play("isShooting", 0, 0f);
-            }
+            SwitchEnumTo(m_enumStateMachine.Idle);//Es tu idle forcement a false ? 
         }
         
 
         if (m_leftClick.WasPressedThisFrame())
         {
-            ClickToMove();
+            if(m_stateMachine == m_enumStateMachine.Idle)
+            {
+                ClickToMove();
+
+            }
+            else if (m_stateMachine == m_enumStateMachine.Aiming)
+            {
+                SwitchEnumTo(m_enumStateMachine.Shooting);
+                m_sound1911.Play();
+
+                m_animator.SetBool("isShooting", true);
+            }
+            
         }
 
+        Debug.Log("isMoving = " + m_isMoving);
+        velocit = m_agent.velocity;
+        if (m_isMoving)
+        {
+            distanceToHit = m_agent.remainingDistance;
+            if (distanceToHit >= 0.01)
+            {
+                m_stateMachine = m_enumStateMachine.Walking;
+                m_animator.SetBool("isWalking", true);
+            }
+            else
+            {
+                m_animator.SetBool("isWalking", false);
+                m_isMoving = false;
+            }
+        }
     }
 
     void ClickToMove()
@@ -70,13 +105,14 @@ public class Player_Behavior : MonoBehaviour
         RaycastHit hit;
         if(Physics.Raycast(Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue()), out hit, 100f))
         {
-            Debug.Log("Click hit");
-            LayerMask layerHit = hit.collider.gameObject.layer;
-            if(layerHit == LayerMask.NameToLayer("Ground"))
+            if(hit.collider.gameObject.layer == LayerMask.NameToLayer("Ground"))
             {
                 m_clickEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 m_clickEffect.transform.position = hit.point;
                 m_clickEffect.Play();
+                m_agent.destination = hit.point;
+
+                m_isMoving = true;
             }
            
         }
@@ -111,9 +147,14 @@ public class Player_Behavior : MonoBehaviour
 
     public void EndAnimationShooting()
     {
-        m_isShooting = false;
+        SwitchEnumTo(m_enumStateMachine.Aiming);
         m_animator.SetBool("isShooting", false);
-        Debug.Log("Go");
+        Debug.Log("EndAnimationShooting");
+       
+    }
 
+    public void SwitchEnumTo(m_enumStateMachine newState)
+    {
+        m_stateMachine = newState;
     }
 }
