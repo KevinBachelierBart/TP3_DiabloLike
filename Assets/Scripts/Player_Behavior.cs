@@ -13,6 +13,10 @@ public class Player_Behavior : MonoBehaviour
     [Header("NAVMESH")]
     private NavMeshAgent m_agent;
 
+    //private Vector3 m_origin;
+    //private Vector3 m_destination;
+    //[SerializeField] private float m_movementTime;
+
     [Header("DESIGN")]
     [SerializeField] private m_enumStateMachine m_stateMachine;
     public enum m_enumStateMachine 
@@ -87,34 +91,48 @@ public class Player_Behavior : MonoBehaviour
         if (m_isMoving)
         {
             distanceToHit = m_agent.remainingDistance;
+            //m_agent.stoppingDistance
             if (distanceToHit >= 0.01)
             {
                 m_stateMachine = m_enumStateMachine.Walking;
                 m_animator.SetBool("isWalking", true);
+
+                ////if()//Si tu arrives a destination
+                //{
+                //    m_isMoving = false;
+                //    m_animator.SetBool("isWalking", false);
+                //}
             }
-            else
-            {
-                m_animator.SetBool("isWalking", false);
-                m_isMoving = false;
+                //else
+                //{
+                //    
+                //    m_isMoving = false;
+                //}
             }
-        }
+
+
     }
 
     void ClickToMove()
     {
+        Ray rayFromCamera = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
-        if(Physics.Raycast(Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue()), out hit, 100f))
+
+        if(Physics.Raycast(rayFromCamera, out hit, 100f))
         {
-            if(hit.collider.gameObject.layer == LayerMask.NameToLayer("Ground"))
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Ground"))
             {
+                //Particle effect
                 m_clickEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 m_clickEffect.transform.position = hit.point;
                 m_clickEffect.Play();
+
+                //Agent moving
                 m_agent.destination = hit.point;
 
                 m_isMoving = true;
             }
-           
+
         }
     }
 
@@ -128,9 +146,8 @@ public class Player_Behavior : MonoBehaviour
 
     private Vector3 GetWorldMousePosition()//LLM
     {
-        Ray ray = Camera.main.ScreenPointToRay(
-                Mouse.current.position.ReadValue()
-            );//Je comprends je fais un ray qui a une originie et une direction dans une 3D et
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+              //Je comprends je fais un ray qui a une originie et une direction dans une 3D et
               //je tranforme la position 2d de la souris EN un ray 3D
               //On peut voir le ray comme une droite infinie ? 
               //ray = rayon qui part de la camera vers la souris.
