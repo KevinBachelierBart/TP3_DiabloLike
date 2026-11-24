@@ -31,6 +31,7 @@ public class Player_Behavior : MonoBehaviour
     private bool m_isMoving = false;
     public Vector3 velocit;
     public float distanceToHit;
+
     [Space(10)]
     [Header("ANIMATION & VISUAL")]
     private Animator m_animator;
@@ -54,6 +55,7 @@ public class Player_Behavior : MonoBehaviour
 
     void Update()
     {
+        #region Aiming
         if (m_aim.IsPressed())
         {
             m_animator.SetBool("isAiming", true);
@@ -67,11 +69,26 @@ public class Player_Behavior : MonoBehaviour
             m_animator.SetBool("isAiming", false);
             SwitchEnumTo(m_enumStateMachine.Idle);//Es tu idle forcement a false ? 
         }
-        
+        #endregion      
+
+        if (m_isMoving)
+        {
+            m_stateMachine = m_enumStateMachine.Walking;
+            m_animator.SetBool("isWalking", true);
+
+            if (m_agent.remainingDistance <= m_agent.stoppingDistance)
+            {
+                m_isMoving = false;
+                m_stateMachine = m_enumStateMachine.Idle;
+                m_animator.SetBool("isWalking", false);
+            }
+
+
+        }
 
         if (m_leftClick.WasPressedThisFrame())
         {
-            if(m_stateMachine == m_enumStateMachine.Idle)
+            if (m_stateMachine == m_enumStateMachine.Idle || m_stateMachine == m_enumStateMachine.Walking)
             {
                 ClickToMove();
 
@@ -85,32 +102,6 @@ public class Player_Behavior : MonoBehaviour
             }
             
         }
-
-        Debug.Log("isMoving = " + m_isMoving);
-        velocit = m_agent.velocity;
-        if (m_isMoving)
-        {
-            distanceToHit = m_agent.remainingDistance;
-            //m_agent.stoppingDistance
-            if (distanceToHit >= 0.01)
-            {
-                m_stateMachine = m_enumStateMachine.Walking;
-                m_animator.SetBool("isWalking", true);
-
-                ////if()//Si tu arrives a destination
-                //{
-                //    m_isMoving = false;
-                //    m_animator.SetBool("isWalking", false);
-                //}
-            }
-                //else
-                //{
-                //    
-                //    m_isMoving = false;
-                //}
-            }
-
-
     }
 
     void ClickToMove()
@@ -129,7 +120,9 @@ public class Player_Behavior : MonoBehaviour
 
                 //Agent moving
                 m_agent.destination = hit.point;
+                m_agent.transform.LookAt(hit.point);
 
+                Debug.Log("m_agent.destination = hit.point;");
                 m_isMoving = true;
             }
 

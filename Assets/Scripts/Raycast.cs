@@ -29,7 +29,6 @@ public class Raycast : MonoBehaviour
         {
             m_directionRaycast = new Vector3(0, 0, 1);
             //m_directionRaycast = transform.Vector3(0, 0, 1);
-            Debug.Log("m_directionRaycast = " + m_directionRaycast);
 
         }
         else if (m_raycastDirection == RaycastDirection.Back)
@@ -64,7 +63,6 @@ public class Raycast : MonoBehaviour
         if (m_ShowRaycast)
         {
             Debug.DrawRay(transform.position, m_directionRaycast * 50f, Color.red);
-            Debug.Log(m_directionRaycast);
         }
 
         if (Physics.Raycast(transform.position, m_directionRaycast, out RaycastHit hitInfo, m_distanceRaycast))
