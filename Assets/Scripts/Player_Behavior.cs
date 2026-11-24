@@ -55,22 +55,30 @@ public class Player_Behavior : MonoBehaviour
 
     void Update()
     {
-        #region Aiming
+        #region Aiming (HOLD)
         if (m_aim.IsPressed())
         {
-            m_animator.SetBool("isAiming", true);
-            LookAtCursor();
+            if(m_stateMachine == m_enumStateMachine.Idle)
+            {
+                m_animator.SetBool("isAiming", true);
+                LookAtCursor();
 
-            SwitchEnumTo(m_enumStateMachine.Aiming);
-
+                SwitchEnumTo(m_enumStateMachine.Aiming);
+            }
+            else
+            {
+                Debug.LogWarning("Can't aim while doing something else than Idle");
+            }
         }
         else
         {
+            //Il faudrait dire a lanimator d arreter lanimation
             m_animator.SetBool("isAiming", false);
-            SwitchEnumTo(m_enumStateMachine.Idle);//Es tu idle forcement a false ? 
+            SwitchEnumTo(m_enumStateMachine.Idle);//Es tu idle forcement a false ? A mediter
         }
-        #endregion      
+        #endregion
 
+        #region When Moving
         if (m_isMoving)
         {
             m_stateMachine = m_enumStateMachine.Walking;
@@ -85,7 +93,9 @@ public class Player_Behavior : MonoBehaviour
 
 
         }
+        #endregion
 
+        #region LeftClick
         if (m_leftClick.WasPressedThisFrame())
         {
             if (m_stateMachine == m_enumStateMachine.Idle || m_stateMachine == m_enumStateMachine.Walking)
@@ -93,15 +103,17 @@ public class Player_Behavior : MonoBehaviour
                 ClickToMove();
 
             }
-            else if (m_stateMachine == m_enumStateMachine.Aiming)
+            else if (m_stateMachine == m_enumStateMachine.Aiming || m_stateMachine == m_enumStateMachine.Shooting)
             {
                 SwitchEnumTo(m_enumStateMachine.Shooting);
                 m_sound1911.Play();
 
                 m_animator.SetBool("isShooting", true);
+                m_animator.Play("CharacterArmature_Idle_Gun_Shoot");
             }
             
         }
+        #endregion
     }
 
     void ClickToMove()
@@ -137,14 +149,15 @@ public class Player_Behavior : MonoBehaviour
         transform.LookAt(target);
     }
 
-    private Vector3 GetWorldMousePosition()//LLM
+    private Vector3 GetWorldMousePosition()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-              //Je comprends je fais un ray qui a une originie et une direction dans une 3D et
-              //je tranforme la position 2d de la souris EN un ray 3D
-              //On peut voir le ray comme une droite infinie ? 
-              //ray = rayon qui part de la camera vers la souris.
+        //Je comprends que je fais un ray qui a une originie et une direction dans une 3D et
+        //je tranforme la position 2d de la souris EN un ray 3D
+        //On peut voir le ray comme une droite infinie ? 
+        //ray = rayon qui part de la camera vers la souris.
 
+        //LLM CI DESSOUS
         Plane groundPlane = new Plane(Vector3.up, transform.position);//Creation dun plane horizontal
 
         if (groundPlane.Raycast(ray, out float distance))
@@ -153,6 +166,7 @@ public class Player_Behavior : MonoBehaviour
         }
 
         return transform.position;
+        //LLM CI DESSUS
     }
 
     public void EndAnimationShooting()
