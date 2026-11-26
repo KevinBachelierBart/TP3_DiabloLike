@@ -134,7 +134,6 @@ public class Player_Behavior : MonoBehaviour
                 m_agent.destination = hit.point;
                 m_agent.transform.LookAt(hit.point);
 
-                Debug.Log("m_agent.destination = hit.point;");
                 m_isMoving = true;
             }
 
