@@ -121,7 +121,10 @@ public class Player_Behavior : MonoBehaviour
         Ray rayFromCamera = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
 
-        if(Physics.Raycast(rayFromCamera, out hit, 100f))
+        int mouseRaycastMask = ~LayerMask.GetMask("IgnoreMouseRaycast");//Exclu ce layer lors du raycasting
+        //1h à chercher cette logique pour qu'un LLM me la donne en 1min...
+
+        if (Physics.Raycast(rayFromCamera, out hit, 100f, mouseRaycastMask))
         {
             if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Ground"))
             {
@@ -137,10 +140,16 @@ public class Player_Behavior : MonoBehaviour
                 m_isMoving = true;
             }
 
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Interactable"))
+            {
+                Debug.Log("Tu as clicke sur un interactable Object");
+            }
+
+
         }
     }
 
-    void LookAtCursor()
+    void LookAtCursor()//Pour le aiming - PETE
     {
         Vector3 target = GetWorldMousePosition();
         target.y = transform.position.y;
@@ -179,5 +188,10 @@ public class Player_Behavior : MonoBehaviour
     public void SwitchEnumTo(m_enumStateMachine newState)
     {
         m_stateMachine = newState;
+    }
+
+    void CalculateCollider()
+    {
+
     }
 }

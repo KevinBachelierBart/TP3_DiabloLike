@@ -33,10 +33,9 @@ public class FadableWalls : MonoBehaviour
     }
     public void FadeIn()//+1 Fade
     {
-        if (m_isFading == false) 
-        {
-            StartCoroutine(Fading(m_fadeInValue));
-        }
+ 
+         StartCoroutine(Fading(m_fadeInValue));
+
     }
         
     public void FadeOut()//+0.5 Fade out

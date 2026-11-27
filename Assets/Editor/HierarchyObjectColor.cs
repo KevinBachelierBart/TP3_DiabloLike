@@ -54,6 +54,13 @@ public class HierarchyObjectColor
                 backgroundColor = Color.black;
                 textColor = Color.white;
             }
+            if (obj.name == "=====MANAGERS=========")
+            {
+                backgroundColor = Color.cyan;
+                textColor = Color.black;
+            }
+
+            
 
             // Or you can use switch case
             //switch (obj.name)
