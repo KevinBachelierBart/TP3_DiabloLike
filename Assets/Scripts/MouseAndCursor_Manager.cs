@@ -35,6 +35,11 @@ public class MouseAndCursor_Manager : MonoBehaviour
                 Cursor.SetCursor(m_investigateCursor, m_investigateCursorPos, CursorMode.Auto);
 
             }
+
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Default"))
+            {
+                Cursor.SetCursor(m_idleCursor, m_idleCursorPos, CursorMode.Auto);
+            }
         }
 
     }

@@ -1,23 +1,21 @@
+using System.Collections;
+using Unity.AI.Navigation;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
+using static UnityEngine.GraphicsBuffer;
 
 public class Player_Behavior : MonoBehaviour
 {
+    [Header("INPUTS")]
     [SerializeField] private InputActionAsset m_inputAction;
     private InputAction m_aim;
     private InputAction m_leftClick;
 
-    [Header("NAVMESH")]
-    private NavMeshAgent m_agent;
-
-    //private Vector3 m_origin;
-    //private Vector3 m_destination;
-    //[SerializeField] private float m_movementTime;
-
-    [Header("DESIGN")]
+    [Header("STATEMACHINE")]
     [SerializeField] private m_enumStateMachine m_stateMachine;
     public enum m_enumStateMachine 
     
@@ -28,10 +26,14 @@ public class Player_Behavior : MonoBehaviour
         Shooting
     };
 
-    private bool m_isMoving = false;
-    public Vector3 velocit;
-    public float distanceToHit;
+    [Header("NAVMESH")]
+    private NavMeshAgent m_agent;
+    [SerializeField] private NavMeshSurface m_navMeshSurface;
 
+    [Header("DESIGN")]
+    [SerializeField] private bool m_canMove = true;
+    private bool m_isMoving = false;
+    private Interactable_Logic m_interactableScript;
     [Space(10)]
     [Header("ANIMATION & VISUAL")]
     private Animator m_animator;
@@ -89,29 +91,38 @@ public class Player_Behavior : MonoBehaviour
                 m_isMoving = false;
                 m_stateMachine = m_enumStateMachine.Idle;
                 m_animator.SetBool("isWalking", false);
+
+                if(m_interactableScript != null)
+                {
+                    m_interactableScript.m_InteractableEvent.Invoke();
+                    m_interactableScript.gameObject.layer = LayerMask.NameToLayer("Default");
+                    
+    
+                    m_interactableScript = null;
+                }
             }
-
-
         }
         #endregion
 
         #region LeftClick
         if (m_leftClick.WasPressedThisFrame())
         {
-            if (m_stateMachine == m_enumStateMachine.Idle || m_stateMachine == m_enumStateMachine.Walking)
+            if (m_canMove)
             {
-                ClickToMove();
+                if (m_stateMachine == m_enumStateMachine.Idle || m_stateMachine == m_enumStateMachine.Walking)
+                {
+                    ClickToMove();
 
-            }
-            else if (m_stateMachine == m_enumStateMachine.Aiming || m_stateMachine == m_enumStateMachine.Shooting)
-            {
-                SwitchEnumTo(m_enumStateMachine.Shooting);
-                m_sound1911.Play();
+                }
+                else if (m_stateMachine == m_enumStateMachine.Aiming || m_stateMachine == m_enumStateMachine.Shooting)
+                {
+                    SwitchEnumTo(m_enumStateMachine.Shooting);
+                    m_sound1911.Play();
 
-                m_animator.SetBool("isShooting", true);
-                m_animator.Play("CharacterArmature_Idle_Gun_Shoot");
+                    m_animator.SetBool("isShooting", true);
+                    m_animator.Play("CharacterArmature_Idle_Gun_Shoot");
+                }
             }
-            
         }
         #endregion
     }
@@ -142,13 +153,23 @@ public class Player_Behavior : MonoBehaviour
 
             if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
-                Debug.Log("Tu as clicke sur un interactable Object");
+                
+                m_interactableScript = hit.collider.GetComponent<Interactable_Logic>();
+                if (m_interactableScript != null)
+                {
+                    Debug.Log("Tu as clicke sur un interactable Object");
+                    
+                    m_agent.destination = m_interactableScript.m_interactablePoint;
+                    m_agent.transform.LookAt(m_interactableScript.m_interactablePoint);
+
+                    m_isMoving = true;
+                }
             }
 
 
         }
     }
-
+    
     void LookAtCursor()//Pour le aiming - PETE
     {
         Vector3 target = GetWorldMousePosition();
@@ -190,8 +211,4 @@ public class Player_Behavior : MonoBehaviour
         m_stateMachine = newState;
     }
 
-    void CalculateCollider()
-    {
-
-    }
 }
